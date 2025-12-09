@@ -1,0 +1,10 @@
+# lingkungan & dependensi
+.env
+/vendor/
+composer.lock
+
+# file autoload (jika perlu)
+/vendor/composer/
+
+# file Pest
+pest-plugins.json
