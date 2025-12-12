@@ -35,4 +35,13 @@ return [
         ],
     ],
 
+    // Microservice endpoints used by Gateway
+    'user' => [
+        'base' => env('USER_SERVICE_URL', 'http://user-service.local'),
+    ],
+
+    'club' => [
+        'base' => env('CLUB_SERVICE_URL', 'http://club-service.local'),
+    ],
+
 ];

@@ -13,8 +13,14 @@ class ExternalService
         $correlationId = Context::get('correlation_id');
 
         try {
+            // Ambil header Authorization jika di-share ke Context (opsional)
+            $headers = ['X-Correlation-ID' => $correlationId];
+            if (Context::has('authorization')) {
+                $headers['Authorization'] = Context::get('authorization');
+            }
+
             // Panggil service lain dengan menyertakan Correlation ID
-            $response = Http::withHeaders(['X-Correlation-ID' => $correlationId])
+            $response = Http::withHeaders($headers)
                             ->timeout(2) // Fail fast (2 detik)
                             ->get($endpoint);
 
