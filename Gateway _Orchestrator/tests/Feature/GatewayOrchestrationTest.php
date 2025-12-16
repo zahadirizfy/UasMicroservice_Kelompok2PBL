@@ -15,21 +15,38 @@ class GatewayOrchestrationTest extends TestCase
             $this->assertTrue($request->hasHeader('Authorization'));
 
             if (str_contains($request->url(), '/api/users/')) {
-                return Http::response(['id' => 1, 'name' => 'User A'], 200);
+                return Http::response([
+                    'data' => [
+                        'id' => 1,
+                        'name' => 'User A'
+                    ]
+                ], 200);
             }
 
-            if (str_contains($request->url(), '/api/clubs/')) {
-                return Http::response(['id' => 2, 'name' => 'Club B'], 200);
+            if (str_contains($request->url(), '/api/clubs/user/')) {
+                return Http::response([
+                    'data' => [
+                        [
+                            'id' => 2,
+                            'name' => 'Club B'
+                        ]
+                    ]
+                ], 200);
             }
 
             return Http::response([], 404);
         });
 
-        $response = $this->getJson('/api/orchestrate/1/2', ['Authorization' => 'Bearer test-token']);
+        $response = $this->getJson(
+            '/api/orchestrate/user/1',
+            ['Authorization' => 'Bearer test-token']
+        );
 
         $response->assertStatus(200);
+
         $response->assertJsonPath('data.user.id', 1);
-        $response->assertJsonPath('data.club.id', 2);
+        $response->assertJsonPath('data.clubs.0.id', 2);
+
         $this->assertNotEmpty($response->json('meta.correlation_id'));
     }
 }

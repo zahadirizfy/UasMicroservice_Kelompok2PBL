@@ -680,7 +680,6 @@ class ComposerStaticInit88970a0117c062eed55fa8728fc43833
         'App\\Exports\\PenyelenggaraExport' => __DIR__ . '/../..' . '/app/Exports/PenyelenggaraExport.php',
         'App\\Http\\Controllers\\AboutSectionController' => __DIR__ . '/../..' . '/app/Http/Controllers/AboutSectionController.php',
         'App\\Http\\Controllers\\AnggotaController' => __DIR__ . '/../..' . '/app/Http/Controllers/AnggotaController.php',
-        'App\\Http\\Controllers\\Api\\ClubApiController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/ClubApiController.php',
         'App\\Http\\Controllers\\AtletController' => __DIR__ . '/../..' . '/app/Http/Controllers/AtletController.php',
         'App\\Http\\Controllers\\AuthController' => __DIR__ . '/../..' . '/app/Http/Controllers/AuthController.php',
         'App\\Http\\Controllers\\ClientLogoController' => __DIR__ . '/../..' . '/app/Http/Controllers/ClientLogoController.php',
