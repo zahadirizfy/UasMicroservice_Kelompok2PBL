@@ -14,7 +14,6 @@ return array(
     'App\\Exports\\PenyelenggaraExport' => $baseDir . '/app/Exports/PenyelenggaraExport.php',
     'App\\Http\\Controllers\\AboutSectionController' => $baseDir . '/app/Http/Controllers/AboutSectionController.php',
     'App\\Http\\Controllers\\AnggotaController' => $baseDir . '/app/Http/Controllers/AnggotaController.php',
-    'App\\Http\\Controllers\\Api\\ClubApiController' => $baseDir . '/app/Http/Controllers/Api/ClubApiController.php',
     'App\\Http\\Controllers\\AtletController' => $baseDir . '/app/Http/Controllers/AtletController.php',
     'App\\Http\\Controllers\\AuthController' => $baseDir . '/app/Http/Controllers/AuthController.php',
     'App\\Http\\Controllers\\ClientLogoController' => $baseDir . '/app/Http/Controllers/ClientLogoController.php',

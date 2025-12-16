@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use App\Http\Middleware\CorrelationIdMiddleware;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -12,7 +13,17 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->append(\App\Http\Middleware\CorrelationIdMiddleware::class);
+
+        // middleware global (punya temen lo)
+        $middleware->append(CorrelationIdMiddleware::class);
+
+        // alias buat route middleware
+        $middleware->alias([
+            'correlation.id' => CorrelationIdMiddleware::class,
+        ]);
+
+        $middleware->append(\App\Http\Middleware\VerifyCsrfToken::class);
+
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

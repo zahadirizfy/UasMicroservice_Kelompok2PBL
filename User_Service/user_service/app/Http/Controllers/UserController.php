@@ -255,4 +255,6 @@ class UserController extends Controller
             ], 500)->header('X-Correlation-ID', $cid);
         }
     }
+
+    
 }

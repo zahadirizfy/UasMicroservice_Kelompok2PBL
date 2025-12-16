@@ -60,32 +60,49 @@ class ApiGatewayController extends Controller
         return $this->proxyGet($request, $url);
     }
 
-    public function orchestrate(Request $request, $userId, $clubId)
-    {
-        $correlationId = Context::get('correlation_id');
+    public function orchestrate(Request $request, $userId)
+{
+    $correlationId = Context::get('correlation_id');
 
-        $user = null;
-        $club = null;
+    // 1️⃣ Call USER SERVICE
+    $userResponse = Http::withHeaders([
+        'X-Correlation-ID' => $correlationId,
+        'Authorization'   => $request->header('Authorization'),
+    ])->get(
+        rtrim(config('services.user.base'), '/') . "/api/users/{$userId}"
+    );
 
-        // Call user service
-        $userResult = $this->proxyGet($request, rtrim(config('services.user.base'), '/') . "/api/users/{$userId}");
-        if ($userResult->getStatusCode() !== 200) {
-            return $userResult;
-        }
-
-        $user = $userResult->getData(true)['data'] ?? null;
-
-        // Call club service
-        $clubResult = $this->proxyGet($request, rtrim(config('services.club.base'), '/') . "/api/clubs/{$clubId}");
-        if ($clubResult->getStatusCode() !== 200) {
-            return $clubResult;
-        }
-
-        $club = $clubResult->getData(true)['data'] ?? null;
-
-        return $this->successResponse([
-            'user' => $user,
-            'club' => $club,
-        ], ['correlation_id' => $correlationId]);
+    if ($userResponse->failed()) {
+        return $this->errorResponse(
+            'User service unavailable',
+            502,
+            ['correlation_id' => $correlationId]
+        );
     }
+
+    // 2️⃣ Call CLUB SERVICE
+    $clubResponse = Http::withHeaders([
+        'X-Correlation-ID' => $correlationId,
+        'Authorization'   => $request->header('Authorization'),
+    ])->get(
+        rtrim(config('services.club.base'), '/') . "/api/clubs/user/{$userId}"
+    );
+
+    if ($clubResponse->failed()) {
+        return $this->errorResponse(
+            'Club service unavailable',
+            502,
+            ['correlation_id' => $correlationId]
+        );
+    }
+
+    // 3️⃣ Return gabungan
+    return $this->successResponse([
+        'user'  => $userResponse->json()['data'],
+        'clubs'=> $clubResponse->json()['data'],
+    ], [
+        'correlation_id' => $correlationId
+    ]);
+}
+
 }

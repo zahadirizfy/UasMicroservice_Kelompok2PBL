@@ -13,12 +13,17 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Middleware Correlation ID
+
+        // Middleware Correlation ID (PUNYA LO — TETAP)
         $middleware->append(\App\Http\Middleware\CorrelationIdMiddleware::class);
+
+        // 🔥 TAMBAHAN WAJIB — DISABLE CSRF UNTUK API
+        $middleware->append(\App\Http\Middleware\VerifyCsrfToken::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // --- LOGIKA GLOBAL ERROR HANDLER ---
-        
+
+        // --- LOGIKA GLOBAL ERROR HANDLER (PUNYA LO — TETAP) ---
+
         // 1. Paksa format JSON jika request datang ke API
         $exceptions->shouldRenderJsonWhen(function (Request $request, Throwable $e) {
             if ($request->is('api/*')) {
@@ -29,17 +34,16 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // 2. Kustomisasi Format Error JSON
         $exceptions->render(function (Throwable $e, Request $request) {
-            // Hanya ubah format jika request adalah API
-            if ($request->is('api/*') || $request->expectsJson()) {
-                
-                // Tentukan status code (default 500 jika error server biasa)
-                $statusCode = method_exists($e, 'getStatusCode') ? $e->getStatusCode() : 500;
 
-                // Return JSON Response Seragam
+            if ($request->is('api/*') || $request->expectsJson()) {
+
+                $statusCode = method_exists($e, 'getStatusCode')
+                    ? $e->getStatusCode()
+                    : 500;
+
                 return response()->json([
                     'status' => 'error',
                     'meta' => [
-                        // Ambil Correlation ID agar error mudah dilacak
                         'correlation_id' => Context::get('correlation_id'),
                         'timestamp' => now()->toIso8601String()
                     ],
