@@ -11,23 +11,35 @@ use Illuminate\Validation\ValidationException;
 class AuthController extends Controller
 {
     /**
-     * REGISTER
+     * (OPSIONAL) WEB LOGIN PAGE
+     * Kalau user_service kamu murni API, boleh hapus method ini.
      */
-    public function register(Request $request)
+    public function loginPage()
+    {
+        // kalau tidak punya view, bisa return json saja
+        // return view('auth.login');
+        return response()->json(['message' => 'User Service Login Page'], 200);
+    }
+
+    /**
+     * REGISTER (API)
+     * POST /api/auth/register
+     */
+    public function apiRegister(Request $request)
     {
         Log::info('[Auth] Register called', ['payload' => $request->all()]);
 
         try {
             $validated = $request->validate([
-                'name' => 'required|string',
-                'email' => 'required|email|unique:users',
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users,email',
                 'password' => 'required|min:6'
             ]);
 
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
-                'password' => bcrypt($validated['password'])
+                'password' => Hash::make($validated['password']),
             ]);
 
             $token = $user->createToken('api-token')->plainTextToken;
@@ -35,6 +47,7 @@ class AuthController extends Controller
             return response()->json([
                 'message' => 'User registered successfully',
                 'token' => $token,
+                'token_type' => 'Bearer',
                 'user' => $user
             ], 201);
 
@@ -50,11 +63,11 @@ class AuthController extends Controller
         }
     }
 
-
     /**
-     * LOGIN
+     * LOGIN (API)
+     * POST /api/auth/login
      */
-    public function login(Request $request)
+    public function apiLogin(Request $request)
     {
         Log::info('[Auth] Login attempt', ['email' => $request->email]);
 
@@ -67,15 +80,21 @@ class AuthController extends Controller
             $user = User::where('email', $validated['email'])->first();
 
             if (!$user || !Hash::check($validated['password'], $user->password)) {
-                Log::warning('[Auth] Invalid credentials', ['email' => $request->email]);
+                Log::warning('[Auth] Invalid credentials', ['email' => $validated['email']]);
                 return response()->json(['message' => 'Invalid credentials'], 401);
             }
+
+            // (opsional) kalau kamu punya kolom is_approved
+            // if (property_exists($user, 'is_approved') && !$user->is_approved) {
+            //     return response()->json(['message' => 'Account not approved'], 403);
+            // }
 
             $token = $user->createToken('api-token')->plainTextToken;
 
             return response()->json([
                 'message' => 'Login successful',
                 'token' => $token,
+                'token_type' => 'Bearer',
                 'user' => $user
             ], 200);
 
@@ -91,35 +110,39 @@ class AuthController extends Controller
         }
     }
 
-
     /**
-     * PROFILE (Protected)
+     * PROFILE (API Protected)
+     * GET /api/auth/profile
      */
-    public function profile(Request $request)
+    public function apiProfile(Request $request)
     {
         return response()->json([
             'user' => $request->user()
         ], 200);
     }
 
-
     /**
-     * LOGOUT (Protected)
+     * LOGOUT (API Protected)
+     * POST /api/auth/logout
      */
-    public function logout(Request $request)
+    public function apiLogout(Request $request)
     {
         try {
-            $request->user()->currentAccessToken()->delete();
+            $user = $request->user();
 
-            Log::info('[Auth] User logged out', ['id' => $request->user()->id]);
+            if (!$user) {
+                return response()->json(['message' => 'Unauthenticated'], 401);
+            }
+
+            $user->currentAccessToken()->delete();
+
+            Log::info('[Auth] User logged out', ['id' => $user->id]);
 
             return response()->json(['message' => 'Logged out successfully'], 200);
 
         } catch (\Throwable $e) {
             Log::error('[Auth] Logout error', ['error' => $e->getMessage()]);
-            return response()->json([
-                'message' => 'Failed to logout'
-            ], 500);
+            return response()->json(['message' => 'Failed to logout'], 500);
         }
     }
 }

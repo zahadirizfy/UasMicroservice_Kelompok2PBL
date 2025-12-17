@@ -7,23 +7,36 @@ use App\Http\Middleware\CorrelationIdMiddleware;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
-        web: __DIR__.'/../routes/web.php',
-        api: __DIR__.'/../routes/api.php',
-        commands: __DIR__.'/../routes/console.php',
+        web: __DIR__ . '/../routes/web.php',
+        api: __DIR__ . '/../routes/api.php',
+        commands: __DIR__ . '/../routes/console.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
 
-        // middleware global (punya temen lo)
+        /**
+         * 1) GLOBAL middleware (jalan di web & api)
+         * Correlation ID aman untuk semua request
+         */
         $middleware->append(CorrelationIdMiddleware::class);
 
-        // alias buat route middleware
+        /**
+         * 2) Alias route middleware
+         */
         $middleware->alias([
             'correlation.id' => CorrelationIdMiddleware::class,
         ]);
 
-        $middleware->append(\App\Http\Middleware\VerifyCsrfToken::class);
+        /**
+         * 3) CSRF hanya untuk WEB (jangan global!)
+         * Kalau dipasang global, request API bisa kena masalah session/CSRF.
+         */
+        $middleware->web(append: [
+            \App\Http\Middleware\VerifyCsrfToken::class,
+        ]);
 
+        // NOTE:
+        // Jangan append VerifyCsrfToken secara global.
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

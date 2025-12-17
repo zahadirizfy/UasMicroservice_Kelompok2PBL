@@ -3,29 +3,38 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 
 class CorrelationIdMiddleware
 {
-    public function handle($request, Closure $next)
+    public function handle(Request $request, Closure $next)
     {
-        // Ambil X-Correlation-ID dari request — atau buat baru
-        $correlationId = $request->header('X-Correlation-ID') ?? (string) Str::uuid();
+        // Ambil dari header (case-insensitive), kalau kosong generate
+        $correlationId = $request->headers->get('X-Correlation-ID');
 
-        // Simpan ke attributes (bisa diambil controller lain)
+        if (empty($correlationId)) {
+            $correlationId = (string) Str::uuid();
+        }
+
+        // Simpan ke attributes (bukan session)
         $request->attributes->set('correlation_id', $correlationId);
 
-        // Tambahkan ke context Logger
+        // Pastikan header request ada (berguna untuk service lain / log)
+        $request->headers->set('X-Correlation-ID', $correlationId);
+
+        // Context logger
         Log::withContext([
-            'correlation_id' => $correlationId
+            'correlation_id' => $correlationId,
         ]);
 
-        // Lanjut request
         $response = $next($request);
 
-        // Tambahkan header ke response
-        $response->headers->set('X-Correlation-ID', $correlationId);
+        // Tambahkan header ke response (kalau response object punya headers)
+        if (method_exists($response, 'headers')) {
+            $response->headers->set('X-Correlation-ID', $correlationId);
+        }
 
         return $response;
     }
